@@ -50,6 +50,32 @@ InnovateOS ist ein modernes, KI-gestütztes Betriebssystem für 3D-Drucker, das 
 - OctoPrint-Kompatibilität (geplant)
 - IoT-Integration
 
+## New Features in v1.3-Beta
+
+### Enhanced AI Integration
+- Live Feedback System for continuous model improvement
+- Extended error detection capabilities
+- Community-driven model training
+- Real-time print quality monitoring
+
+### Improved Plugin System
+- Plugin Rating & Review System
+- Automated plugin updates
+- Plugin recommendations based on usage patterns
+- Enhanced dependency management
+
+### Advanced Material Management
+- Comprehensive material profiles
+- Temperature optimization
+- Brand-specific settings
+- Material usage tracking
+
+### Community Features
+- Feedback Portal for feature requests and bug reports
+- Anonymous telemetry system (opt-in)
+- Community-driven development
+- Usage analytics for better feature prioritization
+
 ## Installation
 
 ### Kompatible 3D-Drucker
