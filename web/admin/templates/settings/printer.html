@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Druckereinstellungen - InnovateOS{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Drucker-Konfiguration -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Drucker-Konfiguration</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Druckername</label>
+                    <input type="text" id="printerName" value="{{ printer.name }}"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Drucker-Modell</label>
+                    <input type="text" id="printerModel" value="{{ printer.model }}"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Firmware-Version</label>
+                    <input type="text" id="firmwareVersion" value="{{ printer.firmware_version }}" readonly
+                           class="mt-1 block w-full rounded-md bg-gray-100 border-gray-300 shadow-sm">
+                </div>
+                
+                <button id="savePrinterConfig" class="btn-primary">
+                    Konfiguration speichern
+                </button>
+            </div>
+        </div>
+
+        <!-- Drucker-Kalibrierung -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Drucker-Kalibrierung</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Z-Offset</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="zOffset" value="{{ printer.z_offset }}" step="0.05"
+                               class="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <span class="text-gray-500">mm</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Druckbett-Nivellierung</label>
+                    <div class="grid grid-cols-3 gap-4 mt-2">
+                        <button class="btn-secondary" onclick="levelPoint(1)">Punkt 1</button>
+                        <button class="btn-secondary" onclick="levelPoint(2)">Punkt 2</button>
+                        <button class="btn-secondary" onclick="levelPoint(3)">Punkt 3</button>
+                        <button class="btn-secondary" onclick="levelPoint(4)">Punkt 4</button>
+                        <button class="btn-secondary" onclick="levelPoint(5)">Zentrum</button>
+                        <button class="btn-secondary" onclick="autoLevel()">Auto-Level</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Schrittmotor-Kalibrierung</label>
+                    <div class="grid grid-cols-3 gap-4 mt-2">
+                        <div>
+                            <label class="text-xs text-gray-500">X-Achse (Schritte/mm)</label>
+                            <input type="number" id="stepsX" value="{{ printer.steps_per_mm.x }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500">Y-Achse (Schritte/mm)</label>
+                            <input type="number" id="stepsY" value="{{ printer.steps_per_mm.y }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500">Z-Achse (Schritte/mm)</label>
+                            <input type="number" id="stepsZ" value="{{ printer.steps_per_mm.z }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500">E-Achse (Schritte/mm)</label>
+                            <input type="number" id="stepsE" value="{{ printer.steps_per_mm.e }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="saveCalibration" class="btn-primary">
+                    Kalibrierung speichern
+                </button>
+            </div>
+        </div>
+
+        <!-- Temperatur-Profile -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Temperatur-Profile</h2>
+            <div class="space-y-4">
+                <div id="tempProfiles">
+                    {% for profile in printer.temp_profiles %}
+                    <div class="temp-profile bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <input type="text" value="{{ profile.name }}" placeholder="Profilname"
+                                   class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <button onclick="deleteProfile({{ loop.index0 }})" class="text-red-600 hover:text-red-800">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm text-gray-500">Druckbett</label>
+                                <input type="number" value="{{ profile.bed_temp }}"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Düse</label>
+                                <input type="number" value="{{ profile.nozzle_temp }}"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <button id="addProfile" class="btn-secondary">
+                    Neues Profil hinzufügen
+                </button>
+                
+                <button id="saveTempProfiles" class="btn-primary">
+                    Profile speichern
+                </button>
+            </div>
+        </div>
+
+        <!-- Sicherheitseinstellungen -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Sicherheitseinstellungen</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="thermalRunaway" {% if printer.safety.thermal_runaway %}checked{% endif %}
+                               class="form-checkbox rounded text-blue-600">
+                        <span class="text-gray-700 dark:text-gray-300">Thermal Runaway Protection</span>
+                    </label>
+                </div>
+                
+                <div>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="endstopCheck" {% if printer.safety.endstop_check %}checked{% endif %}
+                               class="form-checkbox rounded text-blue-600">
+                        <span class="text-gray-700 dark:text-gray-300">Endstop-Prüfung vor Druckstart</span>
+                    </label>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Maximale Drucktemperatur</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="maxTemp" value="{{ printer.safety.max_temp }}"
+                               class="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <span class="text-gray-500">°C</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Maximale Verfahrgeschwindigkeit</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="maxSpeed" value="{{ printer.safety.max_speed }}"
+                               class="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <span class="text-gray-500">mm/s</span>
+                    </div>
+                </div>
+                
+                <button id="saveSafetySettings" class="btn-primary">
+                    Sicherheitseinstellungen speichern
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const socket = io();
+
+// Drucker-Konfiguration
+document.getElementById('savePrinterConfig').addEventListener('click', () => {
+    const config = {
+        name: document.getElementById('printerName').value,
+        model: document.getElementById('printerModel').value
+    };
+    socket.emit('save_printer_config', config);
+});
+
+// Drucker-Kalibrierung
+function levelPoint(point) {
+    socket.emit('level_point', { point });
+}
+
+function autoLevel() {
+    socket.emit('auto_level');
+}
+
+document.getElementById('saveCalibration').addEventListener('click', () => {
+    const calibration = {
+        z_offset: parseFloat(document.getElementById('zOffset').value),
+        steps_per_mm: {
+            x: parseFloat(document.getElementById('stepsX').value),
+            y: parseFloat(document.getElementById('stepsY').value),
+            z: parseFloat(document.getElementById('stepsZ').value),
+            e: parseFloat(document.getElementById('stepsE').value)
+        }
+    };
+    socket.emit('save_calibration', calibration);
+});
+
+// Temperatur-Profile
+document.getElementById('addProfile').addEventListener('click', () => {
+    const template = `
+        <div class="temp-profile bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <input type="text" placeholder="Profilname"
+                       class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <button onclick="this.closest('.temp-profile').remove()" class="text-red-600 hover:text-red-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm text-gray-500">Druckbett</label>
+                    <input type="number" value="60"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-500">Düse</label>
+                    <input type="number" value="200"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('tempProfiles').insertAdjacentHTML('beforeend', template);
+});
+
+document.getElementById('saveTempProfiles').addEventListener('click', () => {
+    const profiles = [];
+    document.querySelectorAll('.temp-profile').forEach(profile => {
+        const inputs = profile.querySelectorAll('input');
+        profiles.push({
+            name: inputs[0].value,
+            bed_temp: parseInt(inputs[1].value),
+            nozzle_temp: parseInt(inputs[2].value)
+        });
+    });
+    socket.emit('save_temp_profiles', { profiles });
+});
+
+// Sicherheitseinstellungen
+document.getElementById('saveSafetySettings').addEventListener('click', () => {
+    const safety = {
+        thermal_runaway: document.getElementById('thermalRunaway').checked,
+        endstop_check: document.getElementById('endstopCheck').checked,
+        max_temp: parseInt(document.getElementById('maxTemp').value),
+        max_speed: parseInt(document.getElementById('maxSpeed').value)
+    };
+    socket.emit('save_safety_settings', safety);
+});
+
+// Status-Updates
+socket.on('printer_status', (data) => {
+    if (data.status === 'success') {
+        showNotification('Einstellungen gespeichert', 'success');
+    } else {
+        showNotification('Fehler beim Speichern', 'error');
+    }
+});
+
+function showNotification(message, type) {
+    // TODO: Implement notification system
+    console.log(message);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+[Unit]
+Description=InnovateOS Network Manager
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/local/bin/network_manager
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+# Netzwerk-Capabilities
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
+
+[Install]
+WantedBy=multi-user.target

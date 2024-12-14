@@ -1,0 +1,23 @@
+[Unit]
+Description=InnovateOS Kernel Service
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/local/bin/innovate_kernel
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+# Sicherheitseinstellungen
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

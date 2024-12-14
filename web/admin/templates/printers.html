@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}3D Printers - InnovateOS{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold dark:text-white">3D Printers</h1>
+        <button id="addPrinterBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+            Add Printer
+        </button>
+    </div>
+
+    <div id="printerGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Printer cards will be dynamically inserted here -->
+    </div>
+</div>
+
+<!-- Printer Card Template -->
+<template id="printerCardTemplate">
+    <div class="printer-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h3 class="text-xl font-semibold dark:text-white printer-name"></h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 printer-model"></p>
+            </div>
+            <span class="status-badge px-2 py-1 rounded text-sm"></span>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="progress-container">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="dark:text-white">Progress</span>
+                    <span class="progress-text dark:text-white">0%</span>
+                </div>
+                <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div class="progress-bar bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="temperature-display">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Nozzle</span>
+                    <div class="text-lg font-semibold dark:text-white nozzle-temp">0°C</div>
+                </div>
+                <div class="temperature-display">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Bed</span>
+                    <div class="text-lg font-semibold dark:text-white bed-temp">0°C</div>
+                </div>
+            </div>
+
+            <div class="flex space-x-2">
+                <button class="start-btn bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">
+                    Start
+                </button>
+                <button class="pause-btn bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm">
+                    Pause
+                </button>
+                <button class="stop-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                    Stop
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const socket = io();
+        const printerGrid = document.getElementById('printerGrid');
+        const template = document.getElementById('printerCardTemplate');
+
+        socket.on('connect', () => {
+            console.log('Connected to WebSocket');
+            requestPrinterStatus();
+        });
+
+        socket.on('printer_status_update', (data) => {
+            updatePrinters(data.printers);
+        });
+
+        function requestPrinterStatus() {
+            socket.emit('request_printer_status');
+        }
+
+        function updatePrinters(printers) {
+            printerGrid.innerHTML = '';
+            printers.forEach(printer => {
+                const card = createPrinterCard(printer);
+                printerGrid.appendChild(card);
+            });
+        }
+
+        function createPrinterCard(printer) {
+            const clone = template.content.cloneNode(true);
+            const card = clone.querySelector('.printer-card');
+
+            card.querySelector('.printer-name').textContent = printer.name;
+            card.querySelector('.printer-model').textContent = printer.model || 'Unknown Model';
+            
+            const statusBadge = card.querySelector('.status-badge');
+            statusBadge.textContent = printer.status;
+            updateStatusBadgeStyle(statusBadge, printer.status);
+
+            card.querySelector('.progress-text').textContent = `${printer.progress}%`;
+            card.querySelector('.progress-bar').style.width = `${printer.progress}%`;
+            
+            card.querySelector('.nozzle-temp').textContent = `${printer.temperature.nozzle}°C`;
+            card.querySelector('.bed-temp').textContent = `${printer.temperature.bed}°C`;
+
+            setupPrinterControls(card, printer.id);
+            return card;
+        }
+
+        function updateStatusBadgeStyle(badge, status) {
+            badge.className = 'status-badge px-2 py-1 rounded text-sm';
+            switch(status) {
+                case 'printing':
+                    badge.classList.add('bg-green-100', 'text-green-800');
+                    break;
+                case 'paused':
+                    badge.classList.add('bg-yellow-100', 'text-yellow-800');
+                    break;
+                case 'error':
+                    badge.classList.add('bg-red-100', 'text-red-800');
+                    break;
+                default:
+                    badge.classList.add('bg-gray-100', 'text-gray-800');
+            }
+        }
+
+        function setupPrinterControls(card, printerId) {
+            const startBtn = card.querySelector('.start-btn');
+            const pauseBtn = card.querySelector('.pause-btn');
+            const stopBtn = card.querySelector('.stop-btn');
+
+            startBtn.addEventListener('click', () => {
+                socket.emit('start_print', { printer_id: printerId });
+            });
+
+            pauseBtn.addEventListener('click', () => {
+                socket.emit('pause_print', { printer_id: printerId });
+            });
+
+            stopBtn.addEventListener('click', () => {
+                socket.emit('stop_print', { printer_id: printerId });
+            });
+        }
+
+        // Request printer status every 5 seconds
+        setInterval(requestPrinterStatus, 5000);
+    });
+</script>
+{% endblock %}

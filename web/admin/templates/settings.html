@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Einstellungen - InnovateOS{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Systemeinstellungen</h1>
+        <p class="mt-2 text-gray-600">Konfigurieren Sie Ihre InnovateOS-Installation.</p>
+    </div>
+
+    <!-- Einstellungen -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Allgemeine Einstellungen</h2>
+        </div>
+        <div class="p-6">
+            <form id="settings-form" class="space-y-6">
+                <div>
+                    <label for="system-name" class="block text-sm font-medium text-gray-700">Systemname</label>
+                    <input type="text" name="system-name" id="system-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label for="network-mode" class="block text-sm font-medium text-gray-700">Netzwerkmodus</label>
+                    <select id="network-mode" name="network-mode" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="dhcp">DHCP (Automatisch)</option>
+                        <option value="static">Statische IP</option>
+                    </select>
+                </div>
+
+                <div id="static-ip-settings" class="space-y-4 hidden">
+                    <div>
+                        <label for="ip-address" class="block text-sm font-medium text-gray-700">IP-Adresse</label>
+                        <input type="text" name="ip-address" id="ip-address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="subnet-mask" class="block text-sm font-medium text-gray-700">Subnetzmaske</label>
+                        <input type="text" name="subnet-mask" id="subnet-mask" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="gateway" class="block text-sm font-medium text-gray-700">Gateway</label>
+                        <input type="text" name="gateway" id="gateway" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="update-channel" class="block text-sm font-medium text-gray-700">Update-Kanal</label>
+                    <select id="update-channel" name="update-channel" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="stable">Stabil</option>
+                        <option value="beta">Beta</option>
+                        <option value="dev">Entwicklung</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-between pt-4">
+                    <button type="submit" class="btn-primary">
+                        Einstellungen speichern
+                    </button>
+                    <button type="button" onclick="resetSettings()" class="btn-secondary">
+                        Zurücksetzen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- System Update -->
+    <div class="mt-8 bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">System Update</h2>
+        </div>
+        <div class="p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Aktuelle Version: <span id="current-version">1.0.0</span></p>
+                    <p class="text-sm text-gray-500">Letzte Prüfung: <span id="last-check">Noch nie</span></p>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="checkUpdates()" class="btn-secondary">
+                        Nach Updates suchen
+                    </button>
+                    <button onclick="installUpdates()" class="btn-primary">
+                        Updates installieren
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Netzwerkmodus-Einstellungen anzeigen/verstecken
+document.getElementById('network-mode').addEventListener('change', function() {
+    const staticSettings = document.getElementById('static-ip-settings');
+    staticSettings.classList.toggle('hidden', this.value !== 'static');
+});
+
+// Formular absenden
+document.getElementById('settings-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const settings = Object.fromEntries(formData.entries());
+    
+    try {
+        const response = await fetch('/api/settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('Einstellungen wurden gespeichert');
+        }
+    } catch (error) {
+        console.error('Fehler beim Speichern der Einstellungen:', error);
+    }
+});
+
+// Einstellungen zurücksetzen
+async function resetSettings() {
+    if (confirm('Möchten Sie alle Einstellungen zurücksetzen?')) {
+        try {
+            const response = await fetch('/api/settings/reset', {
+                method: 'POST'
+            });
+            const result = await response.json();
+            if (result.success) {
+                location.reload();
+            }
+        } catch (error) {
+            console.error('Fehler beim Zurücksetzen der Einstellungen:', error);
+        }
+    }
+}
+
+// Nach Updates suchen
+async function checkUpdates() {
+    try {
+        const response = await fetch('/api/system/check-updates');
+        const result = await response.json();
+        if (result.updates_available) {
+            alert(`Updates verfügbar: ${result.version}`);
+        } else {
+            alert('Keine Updates verfügbar');
+        }
+    } catch (error) {
+        console.error('Fehler bei der Update-Prüfung:', error);
+    }
+}
+
+// Updates installieren
+async function installUpdates() {
+    if (confirm('Möchten Sie die Updates jetzt installieren? Das System wird neu gestartet.')) {
+        try {
+            const response = await fetch('/api/system/install-updates', {
+                method: 'POST'
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('Updates werden installiert. Das System wird neu gestartet.');
+            }
+        } catch (error) {
+            console.error('Fehler bei der Update-Installation:', error);
+        }
+    }
+}
+
+// Aktuelle Einstellungen laden
+async function loadSettings() {
+    try {
+        const response = await fetch('/api/settings');
+        const settings = await response.json();
+        
+        // Formular mit aktuellen Werten füllen
+        document.getElementById('system-name').value = settings.system_name;
+        document.getElementById('network-mode').value = settings.network_mode;
+        document.getElementById('update-channel').value = settings.update_channel;
+        
+        if (settings.network_mode === 'static') {
+            document.getElementById('static-ip-settings').classList.remove('hidden');
+            document.getElementById('ip-address').value = settings.ip_address;
+            document.getElementById('subnet-mask').value = settings.subnet_mask;
+            document.getElementById('gateway').value = settings.gateway;
+        }
+        
+        // Versionsinformationen aktualisieren
+        document.getElementById('current-version').textContent = settings.version;
+        document.getElementById('last-check').textContent = new Date(settings.last_update_check).toLocaleString();
+    } catch (error) {
+        console.error('Fehler beim Laden der Einstellungen:', error);
+    }
+}
+
+// Einstellungen beim Laden der Seite abrufen
+loadSettings();
+</script>
+{% endblock %}

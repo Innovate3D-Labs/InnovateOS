@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Backups - InnovateOS{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Backup-Verwaltung</h1>
+        <p class="mt-2 text-gray-600">Verwalten Sie Ihre System-Backups und stellen Sie bei Bedarf Daten wieder her.</p>
+    </div>
+
+    <!-- Backup-Übersicht -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-medium text-gray-900">Verfügbare Backups</h2>
+                <button onclick="createBackup()" class="btn-primary">
+                    Neues Backup
+                </button>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Name
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Datum
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Größe
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th scope="col" class="relative px-6 py-3">
+                                <span class="sr-only">Aktionen</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="backup-list" class="bg-white divide-y divide-gray-200">
+                        <!-- Backup-Einträge werden hier dynamisch eingefügt -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup-Einstellungen -->
+    <div class="mt-8 bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Backup-Einstellungen</h2>
+        </div>
+        <div class="p-6">
+            <form id="backup-settings-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Automatische Backups</label>
+                    <div class="mt-2 space-y-4">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="auto-backup" name="auto-backup" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="auto-backup" class="ml-2 block text-sm text-gray-900">
+                                Automatische Backups aktivieren
+                            </label>
+                        </div>
+                        <div>
+                            <label for="backup-interval" class="block text-sm font-medium text-gray-700">Backup-Intervall</label>
+                            <select id="backup-interval" name="backup-interval" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                <option value="daily">Täglich</option>
+                                <option value="weekly">Wöchentlich</option>
+                                <option value="monthly">Monatlich</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="retention-period" class="block text-sm font-medium text-gray-700">Aufbewahrungszeitraum</label>
+                    <select id="retention-period" name="retention-period" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="7">7 Tage</option>
+                        <option value="30">30 Tage</option>
+                        <option value="90">90 Tage</option>
+                        <option value="365">1 Jahr</option>
+                    </select>
+                </div>
+
+                <div class="pt-5">
+                    <div class="flex justify-end">
+                        <button type="submit" class="btn-primary">
+                            Einstellungen speichern
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Backup-Liste aktualisieren
+function updateBackupList(backups) {
+    const list = document.getElementById('backup-list');
+    list.innerHTML = backups.map(backup => `
+        <tr>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">${backup.name}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500">${new Date(backup.date).toLocaleString()}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500">${backup.size || 'N/A'}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    ${backup.status || 'Verfügbar'}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button onclick="restoreBackup('${backup.id}')" class="text-blue-600 hover:text-blue-900 mr-4">
+                    Wiederherstellen
+                </button>
+                <button onclick="deleteBackup('${backup.id}')" class="text-red-600 hover:text-red-900">
+                    Löschen
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Backup erstellen
+async function createBackup() {
+    try {
+        const response = await fetch('/api/backup/create', {
+            method: 'POST'
+        });
+        const result = await response.json();
+        if (result.success) {
+            updateBackupList(result.backups);
+        }
+    } catch (error) {
+        console.error('Fehler beim Erstellen des Backups:', error);
+    }
+}
+
+// Backup wiederherstellen
+async function restoreBackup(backupId) {
+    if (confirm('Möchten Sie dieses Backup wirklich wiederherstellen? Das System wird neu gestartet.')) {
+        try {
+            const response = await fetch(`/api/backup/restore/${backupId}`, {
+                method: 'POST'
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('Backup wird wiederhergestellt. Das System wird neu gestartet.');
+            }
+        } catch (error) {
+            console.error('Fehler beim Wiederherstellen des Backups:', error);
+        }
+    }
+}
+
+// Backup löschen
+async function deleteBackup(backupId) {
+    if (confirm('Möchten Sie dieses Backup wirklich löschen?')) {
+        try {
+            const response = await fetch(`/api/backup/delete/${backupId}`, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            if (result.success) {
+                loadBackups();
+            }
+        } catch (error) {
+            console.error('Fehler beim Löschen des Backups:', error);
+        }
+    }
+}
+
+// Backup-Einstellungen speichern
+document.getElementById('backup-settings-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const settings = Object.fromEntries(formData.entries());
+    
+    try {
+        const response = await fetch('/api/backup/settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('Backup-Einstellungen wurden gespeichert');
+        }
+    } catch (error) {
+        console.error('Fehler beim Speichern der Backup-Einstellungen:', error);
+    }
+});
+
+// Backups laden
+async function loadBackups() {
+    try {
+        const response = await fetch('/api/backup/list');
+        const result = await response.json();
+        if (result.success) {
+            updateBackupList(result.backups);
+        }
+    } catch (error) {
+        console.error('Fehler beim Laden der Backups:', error);
+    }
+}
+
+// Backup-Einstellungen laden
+async function loadBackupSettings() {
+    try {
+        const response = await fetch('/api/backup/settings');
+        const settings = await response.json();
+        
+        document.getElementById('auto-backup').checked = settings.auto_backup;
+        document.getElementById('backup-interval').value = settings.interval;
+        document.getElementById('retention-period').value = settings.retention_period;
+    } catch (error) {
+        console.error('Fehler beim Laden der Backup-Einstellungen:', error);
+    }
+}
+
+// Initialisierung
+loadBackups();
+loadBackupSettings();
+</script>
+{% endblock %}

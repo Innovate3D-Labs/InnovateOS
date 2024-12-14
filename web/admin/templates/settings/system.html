@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block title %}Systemeinstellungen - InnovateOS{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- System Update -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">System Update</h2>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600 dark:text-gray-300">Aktuelle Version</span>
+                    <span class="font-semibold dark:text-white" id="currentVersion">{{ system.version }}</span>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600 dark:text-gray-300">Update-Kanal</span>
+                    <select id="updateChannel" class="form-select rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="stable" {% if system.update_channel == 'stable' %}selected{% endif %}>Stable</option>
+                        <option value="beta" {% if system.update_channel == 'beta' %}selected{% endif %}>Beta</option>
+                        <option value="development" {% if system.update_channel == 'development' %}selected{% endif %}>Development</option>
+                    </select>
+                </div>
+                
+                <div class="space-y-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="autoCheck" class="form-checkbox rounded text-blue-600"
+                               {% if system.auto_check %}checked{% endif %}>
+                        <span class="text-gray-600 dark:text-gray-300">Automatisch nach Updates suchen</span>
+                    </label>
+                    
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="autoDownload" class="form-checkbox rounded text-blue-600"
+                               {% if system.auto_download %}checked{% endif %}>
+                        <span class="text-gray-600 dark:text-gray-300">Updates automatisch herunterladen</span>
+                    </label>
+                    
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="autoInstall" class="form-checkbox rounded text-blue-600"
+                               {% if system.auto_install %}checked{% endif %}>
+                        <span class="text-gray-600 dark:text-gray-300">Updates automatisch installieren</span>
+                    </label>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <button id="checkUpdates" class="btn-primary">
+                        Nach Updates suchen
+                    </button>
+                    <button id="installUpdate" class="btn-primary" style="display: none;">
+                        Update installieren
+                    </button>
+                </div>
+                
+                <div id="updateStatus" class="hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600 dark:text-gray-300">Update-Status</span>
+                        <span id="updateStatusText" class="font-semibold dark:text-white">Bereit</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                        <div id="updateProgress" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Resources -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">System Ressourcen</h2>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600 dark:text-gray-300">CPU-Auslastung</span>
+                        <span id="cpuUsage" class="font-semibold dark:text-white">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                        <div id="cpuBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600 dark:text-gray-300">RAM-Auslastung</span>
+                        <span id="ramUsage" class="font-semibold dark:text-white">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                        <div id="ramBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600 dark:text-gray-300">Speicherplatz</span>
+                        <span id="diskUsage" class="font-semibold dark:text-white">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                        <div id="diskBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600 dark:text-gray-300">Systemlaufzeit</span>
+                        <span id="uptime" class="font-semibold dark:text-white">0d 0h 0m</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backup Management -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Backup-Verwaltung</h2>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600 dark:text-gray-300">Letztes Backup</span>
+                    <span id="lastBackup" class="font-semibold dark:text-white">Nie</span>
+                </div>
+                
+                <div class="space-y-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="autoBackup" class="form-checkbox rounded text-blue-600"
+                               {% if system.auto_backup %}checked{% endif %}>
+                        <span class="text-gray-600 dark:text-gray-300">Automatische Backups</span>
+                    </label>
+                    
+                    <div class="flex items-center space-x-2">
+                        <span class="text-gray-600 dark:text-gray-300">Backup-Intervall</span>
+                        <select id="backupInterval" class="form-select rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="daily">Täglich</option>
+                            <option value="weekly">Wöchentlich</option>
+                            <option value="monthly">Monatlich</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button id="createBackup" class="btn-primary">
+                    Backup erstellen
+                </button>
+                
+                <div class="mt-4">
+                    <h3 class="text-lg font-semibold mb-2 dark:text-white">Verfügbare Backups</h3>
+                    <div id="backupList" class="space-y-2">
+                        <!-- Backup-Liste wird dynamisch gefüllt -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plugin Management -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Plugin-Verwaltung</h2>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <input type="text" id="pluginSearch" placeholder="Plugin suchen..."
+                           class="form-input rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <button id="refreshPlugins" class="btn-secondary">
+                        Aktualisieren
+                    </button>
+                </div>
+                
+                <div id="pluginList" class="space-y-4">
+                    <!-- Plugin-Liste wird dynamisch gefüllt -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const socket = io();
+
+// Update Management
+const updateChannel = document.getElementById('updateChannel');
+const autoCheck = document.getElementById('autoCheck');
+const autoDownload = document.getElementById('autoDownload');
+const autoInstall = document.getElementById('autoInstall');
+const checkUpdates = document.getElementById('checkUpdates');
+const installUpdate = document.getElementById('installUpdate');
+const updateStatus = document.getElementById('updateStatus');
+const updateStatusText = document.getElementById('updateStatusText');
+const updateProgress = document.getElementById('updateProgress');
+
+updateChannel.addEventListener('change', () => {
+    socket.emit('set_update_channel', { channel: updateChannel.value });
+});
+
+[autoCheck, autoDownload, autoInstall].forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+        socket.emit('set_auto_update', {
+            auto_check: autoCheck.checked,
+            auto_download: autoDownload.checked,
+            auto_install: autoInstall.checked
+        });
+    });
+});
+
+checkUpdates.addEventListener('click', () => {
+    socket.emit('check_updates');
+    updateStatus.classList.remove('hidden');
+    updateStatusText.textContent = 'Suche nach Updates...';
+});
+
+installUpdate.addEventListener('click', () => {
+    socket.emit('install_update');
+    updateStatusText.textContent = 'Installiere Update...';
+});
+
+socket.on('update_status', (data) => {
+    updateStatusText.textContent = data.status;
+    updateProgress.style.width = `${data.progress}%`;
+    
+    if (data.available_update) {
+        installUpdate.style.display = 'block';
+    } else {
+        installUpdate.style.display = 'none';
+    }
+});
+
+// System Resources
+const cpuUsage = document.getElementById('cpuUsage');
+const cpuBar = document.getElementById('cpuBar');
+const ramUsage = document.getElementById('ramUsage');
+const ramBar = document.getElementById('ramBar');
+const diskUsage = document.getElementById('diskUsage');
+const diskBar = document.getElementById('diskBar');
+const uptime = document.getElementById('uptime');
+
+socket.on('system_stats', (data) => {
+    cpuUsage.textContent = `${data.cpu}%`;
+    cpuBar.style.width = `${data.cpu}%`;
+    
+    ramUsage.textContent = `${data.memory}%`;
+    ramBar.style.width = `${data.memory}%`;
+    
+    diskUsage.textContent = `${data.disk}%`;
+    diskBar.style.width = `${data.disk}%`;
+    
+    const days = Math.floor(data.uptime / 86400);
+    const hours = Math.floor((data.uptime % 86400) / 3600);
+    const minutes = Math.floor((data.uptime % 3600) / 60);
+    uptime.textContent = `${days}d ${hours}h ${minutes}m`;
+});
+
+// Backup Management
+const autoBackup = document.getElementById('autoBackup');
+const backupInterval = document.getElementById('backupInterval');
+const createBackup = document.getElementById('createBackup');
+const backupList = document.getElementById('backupList');
+const lastBackup = document.getElementById('lastBackup');
+
+autoBackup.addEventListener('change', () => {
+    socket.emit('set_auto_backup', {
+        enabled: autoBackup.checked,
+        interval: backupInterval.value
+    });
+});
+
+backupInterval.addEventListener('change', () => {
+    socket.emit('set_auto_backup', {
+        enabled: autoBackup.checked,
+        interval: backupInterval.value
+    });
+});
+
+createBackup.addEventListener('click', () => {
+    socket.emit('create_backup');
+    createBackup.disabled = true;
+    createBackup.textContent = 'Backup wird erstellt...';
+});
+
+socket.on('backup_status', (data) => {
+    if (data.last_backup) {
+        lastBackup.textContent = new Date(data.last_backup).toLocaleString();
+    }
+    
+    backupList.innerHTML = data.backups.map(backup => `
+        <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+            <div>
+                <div class="font-semibold dark:text-white">${backup.name}</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    ${new Date(backup.date).toLocaleString()} - ${backup.size}
+                </div>
+            </div>
+            <div class="space-x-2">
+                <button onclick="restoreBackup('${backup.id}')" class="btn-secondary text-sm">
+                    Wiederherstellen
+                </button>
+                <button onclick="deleteBackup('${backup.id}')" class="btn-secondary text-sm text-red-600">
+                    Löschen
+                </button>
+            </div>
+        </div>
+    `).join('');
+});
+
+function restoreBackup(backupId) {
+    if (confirm('Sind Sie sicher, dass Sie dieses Backup wiederherstellen möchten?')) {
+        socket.emit('restore_backup', { backup_id: backupId });
+    }
+}
+
+function deleteBackup(backupId) {
+    if (confirm('Sind Sie sicher, dass Sie dieses Backup löschen möchten?')) {
+        socket.emit('delete_backup', { backup_id: backupId });
+    }
+}
+
+// Plugin Management
+const pluginSearch = document.getElementById('pluginSearch');
+const refreshPlugins = document.getElementById('refreshPlugins');
+const pluginList = document.getElementById('pluginList');
+
+refreshPlugins.addEventListener('click', () => {
+    socket.emit('refresh_plugins');
+});
+
+pluginSearch.addEventListener('input', () => {
+    const searchTerm = pluginSearch.value.toLowerCase();
+    const plugins = document.querySelectorAll('.plugin-item');
+    
+    plugins.forEach(plugin => {
+        const name = plugin.querySelector('.plugin-name').textContent.toLowerCase();
+        const description = plugin.querySelector('.plugin-description').textContent.toLowerCase();
+        
+        if (name.includes(searchTerm) || description.includes(searchTerm)) {
+            plugin.style.display = 'block';
+        } else {
+            plugin.style.display = 'none';
+        }
+    });
+});
+
+socket.on('plugin_list', (data) => {
+    pluginList.innerHTML = data.plugins.map(plugin => `
+        <div class="plugin-item p-4 bg-gray-50 dark:bg-gray-700 rounded">
+            <div class="flex items-center justify-between mb-2">
+                <div>
+                    <h3 class="plugin-name font-semibold dark:text-white">${plugin.name}</h3>
+                    <p class="plugin-description text-sm text-gray-500 dark:text-gray-400">
+                        ${plugin.description}
+                    </p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" 
+                           onchange="togglePlugin('${plugin.name}', this.checked)"
+                           ${plugin.enabled ? 'checked' : ''}>
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 
+                                peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer 
+                                dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white 
+                                after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                                after:bg-white after:border-gray-300 after:border after:rounded-full 
+                                after:h-5 after:w-5 after:transition-all dark:border-gray-600 
+                                peer-checked:bg-blue-600"></div>
+                </label>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+                Version: ${plugin.version} | Autor: ${plugin.author}
+            </div>
+            ${plugin.update_available ? `
+                <div class="mt-2">
+                    <button onclick="updatePlugin('${plugin.name}')" 
+                            class="text-sm text-blue-600 hover:text-blue-700">
+                        Update verfügbar (v${plugin.latest_version})
+                    </button>
+                </div>
+            ` : ''}
+        </div>
+    `).join('');
+});
+
+function togglePlugin(pluginName, enabled) {
+    socket.emit('toggle_plugin', { 
+        plugin_name: pluginName, 
+        enabled: enabled 
+    });
+}
+
+function updatePlugin(pluginName) {
+    socket.emit('update_plugin', { plugin_name: pluginName });
+}
+
+// Initial data request
+socket.emit('get_system_stats');
+socket.emit('get_backup_status');
+socket.emit('get_plugin_list');
+</script>
+{% endblock %}

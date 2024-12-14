@@ -1,0 +1,15 @@
+[Unit]
+Description=InnovateOS Update Service
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/local/bin/system_updater check
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
