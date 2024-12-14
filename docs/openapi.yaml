@@ -1,0 +1,234 @@
+openapi: 3.0.0
+info:
+  title: InnovateOS API
+  version: '1.0.0'
+  description: |
+    Complete API documentation for InnovateOS 3D printer control system.
+    
+    This API allows you to:
+    * Control and monitor 3D printers
+    * Manage print jobs and files
+    * Configure system settings
+    * Handle plugins and updates
+  contact:
+    name: InnovateOS Support
+    url: https://innovateos.org/support
+    email: support@innovateos.org
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development
+  - url: https://api.innovateos.org/v1
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      summary: Authenticate user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /printer/status:
+    get:
+      summary: Get printer status
+      responses:
+        '200':
+          description: Current printer status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrinterStatus'
+
+  /printer/job:
+    post:
+      summary: Start print job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrintJob'
+      responses:
+        '200':
+          description: Job started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+
+  /files:
+    get:
+      summary: List all files
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [gcode, stl, all]
+      responses:
+        '200':
+          description: List of files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/File'
+
+    post:
+      summary: Upload file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, user, guest]
+
+    PrinterStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [idle, printing, paused, error]
+        temperatures:
+          type: object
+          properties:
+            tool0:
+              $ref: '#/components/schemas/Temperature'
+            bed:
+              $ref: '#/components/schemas/Temperature'
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        currentJob:
+          $ref: '#/components/schemas/JobStatus'
+
+    Temperature:
+      type: object
+      properties:
+        actual:
+          type: number
+        target:
+          type: number
+
+    PrintJob:
+      type: object
+      properties:
+        file:
+          type: string
+        settings:
+          type: object
+          properties:
+            temperature:
+              type: number
+            bed_temperature:
+              type: number
+            speed:
+              type: number
+
+    JobStatus:
+      type: object
+      properties:
+        id:
+          type: string
+        file:
+          type: string
+        progress:
+          type: number
+        timeRemaining:
+          type: number
+        started:
+          type: string
+          format: date-time
+
+    File:
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        size:
+          type: number
+        type:
+          type: string
+          enum: [gcode, stl]
+        uploaded:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints
+  - name: Printer Control
+    description: Printer control and monitoring
+  - name: File Management
+    description: File upload and management
+  - name: System
+    description: System configuration and updates

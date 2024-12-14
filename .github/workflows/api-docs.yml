@@ -1,0 +1,57 @@
+name: API Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'web/admin/routes/**'
+      - 'system/plugins/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'web/admin/routes/**'
+      - 'system/plugins/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyyaml swagger-cli redoc-cli@next
+    
+    - name: Validate OpenAPI spec
+      run: |
+        swagger-cli validate docs/openapi.yaml
+    
+    - name: Generate static documentation
+      run: |
+        redoc-cli bundle docs/openapi.yaml -o docs/dist/index.html
+    
+    - name: Deploy to GitHub Pages
+      if: github.event_name == 'push'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/dist
+        
+    - name: Check for breaking changes
+      if: github.event_name == 'pull_request'
+      run: |
+        python scripts/check_api_changes.py
+      
+    - name: Update API version
+      if: github.event_name == 'push'
+      run: |
+        python scripts/update_api_version.py
