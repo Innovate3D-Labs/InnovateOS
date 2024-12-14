@@ -1,6 +1,6 @@
 # InnovateOS - Das moderne 3D-Drucker Betriebssystem
 
-InnovateOS ist ein modernes, webbasiertes Betriebssystem für 3D-Drucker, das Benutzerfreundlichkeit, Sicherheit und Erweiterbarkeit in den Vordergrund stellt. Es bietet eine intuitive Weboberfläche zur Steuerung und Überwachung Ihres 3D-Druckers, zusammen mit fortschrittlichen Funktionen wie Fernzugriff, automatische Updates und Plugin-Unterstützung.
+InnovateOS ist ein modernes, KI-gestütztes Betriebssystem für 3D-Drucker, das Benutzerfreundlichkeit, Sicherheit und Erweiterbarkeit in den Vordergrund stellt. Es bietet eine intuitive Weboberfläche zur Steuerung und Überwachung Ihres 3D-Druckers, zusammen mit fortschrittlichen Funktionen wie Fernzugriff, automatische Updates und Plugin-Unterstützung.
 
 ## Hauptfunktionen
 
@@ -11,19 +11,29 @@ InnovateOS ist ein modernes, webbasiertes Betriebssystem für 3D-Drucker, das Be
 - Temperatur-Profile für verschiedene Materialien
 - G-Code-Visualisierung und -Vorschau
 
+### 🤖 KI & Automatisierung
+- Echtzeit-Druckfehler-Erkennung mit maschinellem Lernen
+- Automatische Qualitätsoptimierung
+- Vorausschauende Wartung
+- Selbstlernende Druckprofile
+- Automatische G-Code-Optimierung
+
 ### 🔒 Sicherheit
 - Umfassendes Benutzer- und Rechtesystem
 - Zwei-Faktor-Authentifizierung
 - Thermal Runaway Protection
 - Automatische Backups
 - Sichere API-Schlüssel-Verwaltung
+- Verschlüsselte Kommunikation
 
 ### 🔌 Erweiterbarkeit
 - Plugin-System für zusätzliche Funktionen
+- Plugin-Marketplace mit automatischen Updates
 - Anpassbare Benutzeroberfläche
 - API für Drittanbieter-Integration
 - Unterstützung für verschiedene Drucker-Firmware
 - Benutzerdefinierte Makros und Skripte
+- Dependency Management für Plugins
 
 ### 🔄 System
 - Automatische System-Updates
@@ -31,6 +41,14 @@ InnovateOS ist ein modernes, webbasiertes Betriebssystem für 3D-Drucker, das Be
 - Leistungsüberwachung
 - Fehlerprotokollierung
 - Remote-Zugriff
+- Cloud-Integration (in Entwicklung)
+
+### 🌐 API & Integration
+- RESTful API mit OpenAPI/Swagger Dokumentation
+- WebSocket-Unterstützung für Echtzeit-Updates
+- SDK für Python und JavaScript
+- OctoPrint-Kompatibilität (geplant)
+- IoT-Integration
 
 ## Installation
 
@@ -128,6 +146,25 @@ Falls der Drucker nach der Installation nicht startet:
 
 ## Entwicklung
 
+### Voraussetzungen
+- Python 3.9+
+- Node.js 14+
+- Git
+
+### Setup Entwicklungsumgebung
+```bash
+# Repository klonen
+git clone https://github.com/InnovateOS/InnovateOS.git
+cd InnovateOS
+
+# Python-Abhängigkeiten installieren
+pip install -r requirements.txt
+
+# Frontend-Abhängigkeiten installieren
+cd web/admin
+npm install
+```
+
 ### Plugin-Entwicklung
 1. Erstellen Sie ein neues Plugin:
    ```bash
@@ -148,6 +185,20 @@ Falls der Drucker nach der Installation nicht startet:
    innovate-cli build-plugin mein-plugin
    ```
 
+Weitere Informationen finden Sie im [Plugin-Entwicklungsguide](docs/plugin_development.md).
+
+### Tests ausführen
+```bash
+# API Tests
+pytest tests/
+
+# Plugin Tests
+pytest tests/test_plugin_api.py
+
+# KI-Modell Training
+python system/ai/train_model.py
+```
+
 ### API-Nutzung
 ```python
 import requests
@@ -162,12 +213,21 @@ status = api.get_printer_status()
 api.start_print('model.gcode')
 ```
 
+## API-Dokumentation
+
+Die vollständige API-Dokumentation finden Sie unter:
+- [API Referenz](docs/api_reference.md)
+- [OpenAPI Spezifikation](docs/openapi.yaml)
+- [Interaktive API-Docs](https://innovateos.org/api-docs)
+
 ## Support
 
 ### Community
 - [Forum](https://forum.innovateos.org)
 - [Discord](https://discord.gg/innovateos)
 - [Wiki](https://wiki.innovateos.org)
+- [Bug Reports](https://github.com/InnovateOS/InnovateOS/issues)
+- [Feature Requests](https://github.com/InnovateOS/InnovateOS/discussions)
 
 ### Probleme melden
 - [GitHub Issues](https://github.com/InnovateOS/InnovateOS/issues)
@@ -187,8 +247,22 @@ Wir freuen uns über Beiträge! Bitte lesen Sie unsere [Contribution Guidelines]
 
 ## Roadmap
 
-- [ ] OctoPrint-Kompatibilitätsschicht
-- [ ] Klipper-Integration
-- [ ] Multi-Drucker-Unterstützung
-- [ ] Cloud-Backup-Integration
+### Q1 2025
+- [ ] KI-basierte Druckoptimierung
+- [ ] Plugin-Marketplace Beta
 - [ ] Mobile App
+
+### Q2 2025
+- [ ] Cloud-Integration
+- [ ] Multi-Drucker-Management
+- [ ] OctoPrint-Kompatibilität
+
+### Q3 2025
+- [ ] Erweitertes Slicing
+- [ ] IoT-Integration
+- [ ] Automatische Kalibrierung
+
+### Q4 2025
+- [ ] AR/VR Unterstützung
+- [ ] Cluster-Druck
+- [ ] Cloud-Backup
