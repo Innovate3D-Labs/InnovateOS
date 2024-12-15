@@ -78,6 +78,29 @@ InnovateOS ist ein modernes, KI-gestütztes Betriebssystem für 3D-Drucker, das 
 
 ## Installation
 
+### Windows
+
+1. Lade den [Windows Installer](installer/) oder den [Release](https://github.com/Innovate3D-Labs/Innovateos-installer) herunter
+2. Installiere die benötigten Python-Pakete:
+```bash
+cd installer
+pip install -r requirements.txt
+```
+
+3. Starte den Installer:
+```bash
+python main.py
+```
+
+4. Folge den Anweisungen des Installers:
+   - Wähle deine SD-Karte aus
+   - Konfiguriere WLAN und Drucker
+   - Warte auf den Abschluss der Installation
+
+Eine detaillierte Anleitung findest du in der [Installer-Dokumentation](installer/INSTALLER.md).
+
+### Linux (Manuell)
+
 ### Kompatible 3D-Drucker
 InnovateOS wurde für folgende 3D-Drucker-Mainboards getestet:
 - BTT SKR Mini E3 V2/V3

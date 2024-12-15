@@ -1,0 +1,3 @@
+2024-12-15 11:07:39,782 - __main__ - INFO - Starting InnovateOS Installer
+2024-12-15 11:09:31,467 - utils.installer - ERROR - Error getting drives: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2024-12-15 11:09:50,552 - utils.installer - ERROR - Error getting drives: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'

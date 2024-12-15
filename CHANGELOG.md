@@ -50,6 +50,22 @@
 - 🛠️ Verbesserte Build-Pipeline
 - 📦 Neue API-Endpunkte
 
+## [v1.3.1-Beta] - 2024-12-15
+
+### Drucker-Einstellungen
+- 🔧 Verbesserte Temperaturprofil-Verwaltung in der Weboberfläche
+  - Neu strukturierte JavaScript-Funktionen für bessere Wartbarkeit
+  - Korrigierte Event-Handler für das Löschen von Profilen
+  - Verbesserte DOM-Manipulation mit zuverlässiger Index-Berechnung
+- 💄 UI/UX Verbesserungen
+  - Konsistente Label-Stile für alle Eingabefelder
+  - Optimierte Reihenfolge der Temperatur-Eingabefelder
+  - Placeholder statt fester Werte für neue Profile
+- 🐛 Bug Fixes
+  - Behobene JavaScript-Fehler in der Profilverwaltung
+  - Korrigierte Reihenfolge der Temperaturwerte beim Speichern
+  - Verbesserte Fehlerbehandlung beim Löschen von Profilen
+
 ## Geplant für v1.4
 - 🎯 GPU-beschleunigtes KI-Training
 - 🏪 Material-Marketplace
